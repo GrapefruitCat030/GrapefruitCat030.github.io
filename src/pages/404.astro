@@ -1,0 +1,6 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { url } from '../config';
+---
+<BaseLayout title="页面没有找到" active=""><div class="not-found"><p class="eyebrow" style="justify-content:center">A LITTLE OFF THE PATH</p><h1>404</h1><p>这页纸暂时还没有写下内容。</p><a class="text-link" href={url()}><Icon name="left" />回到首页</a></div></BaseLayout>

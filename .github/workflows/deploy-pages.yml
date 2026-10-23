@@ -1,0 +1,66 @@
+# 只会在未来由你点击 Actions → Run workflow 后发布。
+# 当前本地文件不会启动任何远程构建、上传或部署。
+name: Publish GitHub Pages (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Read GitHub Pages configuration
+        uses: actions/configure-pages@v6
+        id: pages
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check Astro and TypeScript
+        run: npm run check
+
+      - name: Build static site
+        run: npm run build
+        env:
+          PUBLIC_SITE: ${{ steps.pages.outputs.origin }}
+          PUBLIC_BASE: ${{ steps.pages.outputs.base_path }}
+
+      - name: Prepare Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        uses: actions/deploy-pages@v5
+        id: deployment

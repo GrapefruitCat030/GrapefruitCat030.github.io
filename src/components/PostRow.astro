@@ -1,0 +1,22 @@
+---
+import type { Post } from '../lib/content';
+import { readingTime, shortDate } from '../lib/content';
+import { url } from '../config';
+import Icon from './Icon.astro';
+interface Props { post: Post; }
+const { post } = Astro.props;
+---
+<article class="post-row" data-post data-tags={JSON.stringify(post.data.tags)}>
+  <time class="post-date" datetime={post.data.date}><span>{shortDate(post.data.date)}</span><span>{post.data.date.slice(0, 4)}</span></time>
+  <div class="post-content">
+    <div class="post-meta">
+      <span>{post.data.tags[0] || '手记'}</span>
+      <span class="meta-separator" aria-hidden="true">/</span>
+      <span>{readingTime(post.body)} 分钟阅读</span>
+      {post.data.featured && <span class="featured-label">精选</span>}
+    </div>
+    <h3><a href={url(`posts/${post.id}/`)}>{post.data.title}<Icon name="arrow" /></a></h3>
+    <p>{post.data.description}</p>
+    <div class="post-tags">{post.data.tags.map(tag => <a href={url(`?tag=${encodeURIComponent(tag)}`)}>#{tag}</a>)}</div>
+  </div>
+</article>

@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostRow from '../components/PostRow.astro';
+import Icon from '../components/Icon.astro';
+import { getPosts, getNotes } from '../lib/content';
+import { siteConfig, url } from '../config';
+const [posts, notes] = await Promise.all([getPosts(), getNotes()]);
+const tags = [...new Set(posts.flatMap(post => post.data.tags))];
+const latestNote = notes[0];
+---
+<BaseLayout>
+  <section class="intro-section" aria-labelledby="intro-title">
+    <div class="eyebrow"><span class="eyebrow-line"></span>A DEVELOPER'S NOTEBOOK</div>
+    <h1 id="intro-title">记录技术，<span>也记录生活。</span></h1>
+    <p>{siteConfig.intro}</p>
+    <div class="intro-bottom"><span class="role-label">{siteConfig.role}</span><span class="intro-motto">{siteConfig.motto}</span></div>
+  </section>
+  <div class="home-grid">
+    <section class="posts-section" aria-labelledby="posts-heading">
+      <div class="section-heading"><h2 id="posts-heading">最近文章 <span class="count" id="post-count">{String(posts.length).padStart(2, '0')}</span></h2><a class="text-link" href={url('archives/')}>全部归档 <Icon name="right" /></a></div>
+      <div class="tag-filters" role="group" aria-label="按标签筛选文章"><button type="button" class="filter-button selected" data-filter="" aria-pressed="true">全部</button>{tags.map(tag => <button type="button" class="filter-button" data-filter={tag} aria-pressed="false">{tag}</button>)}</div>
+      <div id="post-list">{posts.map(post => <PostRow post={post} />)}</div>
+      <p class="empty-state" id="filter-empty" hidden>这个标签下还没有文章。试试其他标签吧。</p>
+      <p class="list-end"><span></span>暂时就写到这里，下次见。<span></span></p>
+    </section>
+    <aside class="home-aside">
+      <section class="about-card"><p class="aside-eyebrow">这里的主人</p><h2>你好，我是<span>{siteConfig.name}。</span></h2><p>一名{siteConfig.role}。<br />喜欢把复杂的问题拆开，<br />也喜欢把零散的想法写下来。</p><a class="text-link" href={url('about/')}>多了解一点 <Icon name="arrow" /></a><div class="social-links">{siteConfig.github && <a href={siteConfig.github} aria-label="GitHub"><Icon name="github" /></a>}{siteConfig.email && <a href={`mailto:${siteConfig.email}`} aria-label="邮件联系"><Icon name="mail" /></a>}<a href={url('rss.xml')} aria-label="RSS 订阅"><Icon name="rss" /></a></div></section>
+      <section class="aside-section"><h2>纸边随记 <span>NOTES</span></h2>{latestNote ? <><p class="note-preview">{latestNote.data.description}</p><time class="tiny-date" datetime={latestNote.data.date}>{latestNote.data.date.replaceAll('-', '.')}</time><a class="text-link" href={url('notes/')}>去看看随记 <Icon name="right" /></a></> : <p class="note-preview">这里会存放一些日常的想法。</p>}</section>
+      <div class="aside-footnote"><Icon name="leaf" /><p>一小块安静的互联网。<br />欢迎路过，也欢迎常来。</p></div>
+    </aside>
+  </div>
+</BaseLayout>
+<script>
+  const filters = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const rows = document.querySelectorAll<HTMLElement>('[data-post]');
+  const count = document.querySelector('#post-count')!;
+  const empty = document.querySelector<HTMLElement>('#filter-empty')!;
+  function filterPosts(tag: string, updateUrl = false) {
+    let total = 0;
+    rows.forEach(row => { const visible = !tag || JSON.parse(row.dataset.tags || '[]').includes(tag); row.hidden = !visible; if (visible) total++; });
+    filters.forEach(button => { const selected = button.dataset.filter === tag; button.classList.toggle('selected', selected); button.setAttribute('aria-pressed', String(selected)); });
+    count.textContent = String(total).padStart(2, '0'); empty.hidden = total > 0;
+    if (updateUrl) { const next = new URL(location.href); if (tag) next.searchParams.set('tag', tag); else next.searchParams.delete('tag'); history.pushState(null, '', next); }
+  }
+  filters.forEach(button => button.addEventListener('click', () => filterPosts(button.dataset.filter || '', true)));
+  filterPosts(new URLSearchParams(location.search).get('tag') || '');
+  window.addEventListener('popstate', () => filterPosts(new URLSearchParams(location.search).get('tag') || ''));
+</script>

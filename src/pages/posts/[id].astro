@@ -1,0 +1,22 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { getPosts, readingTime, type Post } from '../../lib/content';
+import { url } from '../../config';
+export async function getStaticPaths() { const posts = await getPosts(); return posts.map((post, i) => ({ params: { id: post.id }, props: { post, next: posts[i + 1] } })); }
+interface Props { post: Post; next?: Post; }
+const { post, next } = Astro.props;
+const { Content, headings } = await render(post);
+---
+<BaseLayout title={post.data.title} description={post.data.description}>
+  <header class="article-header">
+    <a class="text-link back-link" href={url()}><Icon name="left" />回到文章列表</a>
+    <div class="article-kicker"><time datetime={post.data.date}>{post.data.date.replaceAll('-', '.')}</time> <span aria-hidden="true">/</span> {readingTime(post.body)} 分钟阅读</div>
+    <h1>{post.data.title}</h1>
+    <p>{post.data.description}</p>
+    <div class="post-tags">{post.data.tags.map(tag => <a href={url(`?tag=${encodeURIComponent(tag)}`)}>#{tag}</a>)}</div>
+  </header>
+  <div class="article-grid"><article class="prose"><Content /></article>{headings.length > 0 && <nav class="toc" aria-label="文章目录"><p>这篇文章</p><ul>{headings.filter(heading => heading.depth < 4).map(heading => <li class:list={[{ 'toc-sub': heading.depth > 2 }]}><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ul></nav>}</div>
+  <footer class="article-footer"><span>谢谢你读到这里。</span>{next ? <a href={url(`posts/${next.id}/`)}>下一篇：{next.data.title} <Icon name="right" /></a> : <a href={url()}>回到文章列表 <Icon name="right" /></a>}</footer>
+</BaseLayout>

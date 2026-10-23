@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPosts, getNotes } from '../lib/content';
+import { url } from '../config';
+
+const [posts, notes] = await Promise.all([getPosts(), getNotes()]);
+const entries = [...posts, ...notes].sort((a, b) => b.data.date.localeCompare(a.data.date));
+const years = [...new Set(entries.map(entry => entry.data.date.slice(0, 4)))];
+const groups = years.map(year => ({ year, entries: entries.filter(entry => entry.data.date.startsWith(year)) }));
+const tags = [...new Set(posts.flatMap(post => post.data.tags))];
+---
+<BaseLayout title="归档" description="按时间整理的文章与随记。" active="archives">
+  <header class="page-heading">
+    <p class="eyebrow">THE ARCHIVE</p>
+    <h1>归档</h1>
+    <p>把零散的记录，连成一条慢慢延伸的时间线。</p>
+  </header>
+
+  <div class="archive-stats" aria-label="内容总数">
+    <p><strong>{posts.length}</strong><span>篇文章</span></p>
+    <p><strong>{notes.length}</strong><span>则随记</span></p>
+  </div>
+
+  {tags.length > 0 && <section class="archive-tags" aria-labelledby="archive-tags-heading">
+    <h2 id="archive-tags-heading" class="aside-eyebrow">文章标签</h2>
+    <div class="tag-cloud">{tags.map(tag => <a class="tag-link" href={url(`?tag=${encodeURIComponent(tag)}`)}>{tag}</a>)}</div>
+  </section>}
+
+  <div class="archive-timeline">
+    {groups.map(group => <section class="archive-year" aria-labelledby={`year-${group.year}`}>
+      <h2 id={`year-${group.year}`}>{group.year}<span class="count">{group.entries.length}</span></h2>
+      <ul class="archive-list">
+        {group.entries.map(entry => <li class="archive-item">
+          <time class="archive-date" datetime={entry.data.date}>{entry.data.date.slice(5).replace('-', '.')}</time>
+          <a href={url(`${entry.collection === 'blog' ? 'posts' : 'notes'}/${entry.id}/`)}>{entry.data.title}</a>
+          <span class="archive-type">{entry.collection === 'blog' ? '文章' : '随记'}</span>
+        </li>)}
+      </ul>
+    </section>)}
+    {entries.length === 0 && <p class="empty-state">还没有公开的记录。写下第一篇，我们从这里开始。</p>}
+  </div>
+</BaseLayout>

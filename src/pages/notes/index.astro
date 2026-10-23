@@ -1,0 +1,14 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { getNotes } from '../../lib/content';
+import { url } from '../../config';
+const notes = await getNotes();
+const entries = await Promise.all(notes.map(async note => ({ note, ...(await render(note)) })));
+---
+<BaseLayout title="随记" active="notes" description="一些还没有长成文章的想法，和日常生活里的小小片段。">
+  <header class="page-heading"><p class="eyebrow">LITTLE THINGS, ALONG THE WAY</p><h1>纸边随记</h1><p>一些还没有长成文章的想法，和生活里的小小片段。</p></header>
+  <div class="notes-list">{entries.map(({ note, Content }) => <article class="note-entry" id={note.id}><time datetime={note.data.date}>{note.data.date}</time><div><h2><a href={url(`notes/${note.id}/`)}>{note.data.title}</a></h2><div class="prose"><Content /></div><a class="text-link note-permalink" href={url(`notes/${note.id}/`)}>独立链接 <Icon name="arrow" /></a></div></article>)}</div>
+  {entries.length === 0 && <p class="empty-state">还没有随记，先去生活里收集一点灵感。</p>}
+</BaseLayout>

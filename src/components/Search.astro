@@ -1,0 +1,56 @@
+---
+import { getPosts, getNotes } from '../lib/content';
+import { url } from '../config';
+import Icon from './Icon.astro';
+const [posts, notes] = await Promise.all([getPosts(), getNotes()]);
+const entries = [...posts, ...notes].map(entry => ({
+  title: entry.data.title,
+  description: entry.data.description,
+  tags: entry.data.tags.join(' '),
+  body: entry.body,
+  type: entry.collection === 'blog' ? '文章' : '随记',
+  href: url(`${entry.collection === 'blog' ? 'posts' : 'notes'}/${entry.id}/`),
+}));
+---
+<dialog class="search-dialog" id="search-dialog" aria-labelledby="search-heading" data-index={JSON.stringify(entries)}>
+  <div class="search-top"><h2 id="search-heading">找一段文字</h2><button type="button" class="icon-button" data-close-search aria-label="关闭搜索"><Icon name="close" /></button></div>
+  <div class="search-field"><Icon name="search" /><input id="search-input" type="search" placeholder="搜索标题、标签或正文…" aria-label="搜索文章和随记" autocomplete="off" /></div>
+  <p class="search-status" role="status">输入关键词，搜索文章与随记。</p>
+  <ul class="search-results"></ul>
+  <div class="search-bottom"><span>所有搜索都在浏览器本地完成</span><kbd>ESC 关闭</kbd></div>
+</dialog>
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('#search-dialog')!;
+  const input = document.querySelector<HTMLInputElement>('#search-input')!;
+  const results = dialog.querySelector<HTMLUListElement>('.search-results')!;
+  const status = dialog.querySelector<HTMLElement>('.search-status')!;
+  const index: {title: string; description: string; tags: string; body: string; type: string; href: string}[] = JSON.parse(dialog.dataset.index || '[]');
+
+  function updateResults() {
+    const query = input.value.trim().toLocaleLowerCase();
+    results.replaceChildren();
+    if (!query) { status.textContent = '输入关键词，搜索文章与随记。'; return; }
+    const matches = index.filter(entry => `${entry.title} ${entry.description} ${entry.tags} ${entry.body}`.toLocaleLowerCase().includes(query));
+    status.textContent = matches.length ? `找到 ${matches.length} 条结果` : '没有找到相关内容，换个关键词试试。';
+    for (const entry of matches) {
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = entry.href;
+      const type = document.createElement('span'); type.className = 'result-type'; type.textContent = entry.type;
+      const title = document.createElement('strong'); title.textContent = entry.title;
+      const excerpt = document.createElement('p'); excerpt.textContent = entry.description;
+      link.append(type, title, excerpt); item.append(link); results.append(item);
+    }
+  }
+  function openSearch() { if (!dialog.open) { dialog.showModal(); input.focus(); } }
+  document.querySelectorAll('[data-open-search]').forEach(button => button.addEventListener('click', openSearch));
+  dialog.querySelector('[data-close-search]')?.addEventListener('click', () => dialog.close());
+  // search 输入框的原生 Escape 会先清空文字；在这里统一为关闭弹窗。
+  dialog.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); dialog.close(); } });
+  dialog.addEventListener('click', event => { if (event.target === dialog) { const box = dialog.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) dialog.close(); } });
+  input.addEventListener('input', updateResults);
+  document.addEventListener('keydown', event => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); openSearch(); }
+    if (event.key === '/' && !dialog.open && !(event.target instanceof HTMLElement && (event.target.matches('input, textarea') || event.target.isContentEditable))) { event.preventDefault(); openSearch(); }
+  });
+</script>

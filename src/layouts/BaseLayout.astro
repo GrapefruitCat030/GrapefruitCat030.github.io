@@ -1,0 +1,57 @@
+---
+import '../styles/global.css';
+import { siteConfig, url } from '../config';
+import Icon from '../components/Icon.astro';
+import Search from '../components/Search.astro';
+interface Props { title?: string; description?: string; active?: string; }
+const { title, description = siteConfig.description, active = 'blog' } = Astro.props;
+const pageTitle = title ? `${title} · ${siteConfig.title}` : siteConfig.title;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const isNotFound = /\/404(?:\.html)?\/?$/.test(Astro.url.pathname);
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f7f8f4" />
+    <meta name="generator" content={Astro.generator} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    {isNotFound ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={siteConfig.title} href={url('rss.xml')} />
+    <title>{pageTitle}</title>
+    <script is:inline>
+      try { document.documentElement.dataset.theme = localStorage.getItem('notebook-theme') === 'dark' ? 'dark' : 'light'; } catch { document.documentElement.dataset.theme = 'light'; }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href={url()} aria-label={`${siteConfig.title}首页`}><span class="brand-mark"><Icon name="leaf" /></span><span>{siteConfig.title}</span></a>
+        <nav class="main-nav" aria-label="主导航">{siteConfig.navigation.map(item => <a class:list={[{ active: active === item.key }]} aria-current={active === item.key ? 'page' : undefined} href={url(item.path)}>{item.label}</a>)}</nav>
+        <div class="header-actions">
+          <button type="button" class="search-trigger" data-open-search aria-label="搜索文章和随记"><Icon name="search" /><span>搜索</span><kbd>⌘ K</kbd></button>
+          <span class="action-divider" aria-hidden="true"></span>
+          <button type="button" class="icon-button theme-toggle" aria-label="切换到深色模式" aria-pressed="false"><Icon name="moon" class="moon-icon" /><Icon name="sun" class="sun-icon" /></button>
+        </div>
+      </div>
+    </header>
+    <main id="main" class="page-shell"><slot /></main>
+    <footer class="site-footer page-shell">
+      <div><span class="footer-name">{siteConfig.title}</span><span>© {new Date().getFullYear()}</span><span class="footer-divider">/</span><span>写下所见，留下所思。</span></div>
+      <a class="rss-link" href={url('rss.xml')}><Icon name="rss" />RSS 订阅</a>
+    </footer>
+    <Search />
+    <script>
+      const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle')!;
+      function syncThemeButton() { const dark = document.documentElement.dataset.theme === 'dark'; toggle.setAttribute('aria-label', dark ? '切换到浅色模式' : '切换到深色模式'); toggle.setAttribute('aria-pressed', String(dark)); }
+      syncThemeButton();
+      toggle.addEventListener('click', () => { const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; try { localStorage.setItem('notebook-theme', theme); } catch {} syncThemeButton(); });
+    </script>
+  </body>
+</html>

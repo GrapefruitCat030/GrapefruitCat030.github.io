@@ -1,0 +1,15 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { getNotes, type Note } from '../../lib/content';
+import { url } from '../../config';
+export async function getStaticPaths() { return (await getNotes()).map(note => ({ params: { id: note.id }, props: { note } })); }
+interface Props { note: Note; }
+const { note } = Astro.props;
+const { Content } = await render(note);
+---
+<BaseLayout title={note.data.title} description={note.data.description} active="notes">
+  <header class="article-header"><a class="text-link back-link" href={url('notes/')}><Icon name="left" />回到随记</a><div class="article-kicker"><time datetime={note.data.date}>{note.data.date}</time> / 随记</div><h1>{note.data.title}</h1></header>
+  <article class="prose about-content"><Content /></article>
+</BaseLayout>

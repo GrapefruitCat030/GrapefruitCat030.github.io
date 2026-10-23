@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { siteConfig, url } from '../config';
+---
+<BaseLayout title="关于" description={`关于${siteConfig.name}，一名${siteConfig.role}的个人手记。`} active="about">
+  <header class="page-heading">
+    <p class="eyebrow">ABOUT ME</p>
+    <h1>关于</h1>
+    <p>关于屏幕另一端，那个慢慢写字的人。</p>
+  </header>
+
+  <article class="about-content prose">
+    <h2>你好，我是{siteConfig.name}。</h2>
+    <p>一名{siteConfig.role}。这里是我的个人手记，留给技术实践中的思考，也留给工作之外的日常。</p>
+    <p>{siteConfig.intro}</p>
+
+    <h2>这里会记录什么</h2>
+    <p>写开发中遇到的问题、梳理过的原理，以及那些需要回头再看一遍的经验。比起急着给出答案，更希望把问题的来龙去脉讲清楚。</p>
+    <p>也会放一些短小的随记：一个还没成形的想法、一段阅读后的感受，或是值得记住的小事。不必每一次都写得完整，先让想法有个落脚的地方。</p>
+
+    <h2>保持联系</h2>
+    {(siteConfig.github || siteConfig.email) ? <div class="about-contact">
+      {siteConfig.github && <p><a href={siteConfig.github}><Icon name="github" />在 GitHub 找到我</a></p>}
+      {siteConfig.email && <p><a href={`mailto:${siteConfig.email}`}><Icon name="mail" />{siteConfig.email}</a></p>}
+    </div> : <p>尚未填写联系信息。</p>}
+
+    <blockquote><p>这是一段示例介绍，可以慢慢换成你自己的文字，让这块小地方更像你。</p></blockquote>
+    <p><a class="text-link" href={url()}><Icon name="left" />回到文章</a></p>
+  </article>
+</BaseLayout>
