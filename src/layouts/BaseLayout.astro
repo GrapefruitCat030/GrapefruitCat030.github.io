@@ -8,6 +8,7 @@ const { title, description = siteConfig.description, active = 'blog' } = Astro.p
 const pageTitle = title ? `${title} · ${siteConfig.title}` : siteConfig.title;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const isNotFound = /\/404(?:\.html)?\/?$/.test(Astro.url.pathname);
+const { background } = siteConfig.appearance;
 ---
 <!doctype html>
 <html lang="zh-CN">
@@ -28,7 +29,14 @@ const isNotFound = /\/404(?:\.html)?\/?$/.test(Astro.url.pathname);
       try { document.documentElement.dataset.theme = localStorage.getItem('notebook-theme') === 'dark' ? 'dark' : 'light'; } catch { document.documentElement.dataset.theme = 'light'; }
     </script>
   </head>
-  <body>
+  <body style={{
+    '--page-background-image': `url("${url(background.image)}")`,
+    '--page-background-position': background.position,
+    '--page-background-size': background.size,
+    '--page-background-opacity': background.opacity,
+    '--page-background-dark-opacity': background.darkOpacity,
+  }}>
+    <div class="page-background" aria-hidden="true"></div>
     <a class="skip-link" href="#main">跳到正文</a>
     <header class="site-header">
       <div class="header-inner">
